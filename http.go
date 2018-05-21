@@ -69,6 +69,7 @@ func (rw *ResponseWriter) SetCookieToken(key, val string) {
 //Request HTTP请求，封装一些便捷操作
 type Request struct {
 	*http.Request
+	reqBody []byte
 }
 
 //IsPost 是否 post 请求
@@ -115,6 +116,17 @@ func (r *Request) ReadJSON(data interface{}) error {
 	return json.Unmarshal(bin, data)
 }
 
+//ReadRequestBody 读取请求body，这个方法不受 body 只能读一次的限制，我们会把内容存起来
+func (r *Request) ReadRequestBody() []byte {
+	if r.reqBody == nil {
+		bin, err := ioutil.ReadAll(r.Body)
+		if err == nil {
+			r.reqBody = bin
+		}
+	}
+	return r.reqBody
+}
+
 //GetCookieToken 获取存放在 cookie 的 kv 值，如果没有或者检验不合法返回空串
 func (r *Request) GetCookieToken(key string) string {
 	if c, err := r.Cookie(key); err == nil {
@@ -139,7 +151,7 @@ func (r *Request) GetCookieToken(key string) string {
 func HTTPFunc(handler func(*ResponseWriter, *Request)) func(http.ResponseWriter, *http.Request) {
 	return func(rw http.ResponseWriter, r *http.Request) {
 		rspW := ResponseWriter{rw}
-		req := Request{r}
+		req := Request{Request: r}
 		handler(&rspW, &req)
 	}
 }
