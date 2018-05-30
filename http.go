@@ -69,6 +69,9 @@ func (rw *ResponseWriter) SetCookieToken(key, val string) {
 
 //Request HTTP请求，封装一些便捷操作
 type Request struct {
+	//用户自定义使用的业务信息，用于请求处理链上传递信息
+	UserInfo interface{}
+
 	*http.Request
 	reqBody []byte
 }
