@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 	"math/rand"
+	"strings"
 	"time"
 )
 
@@ -18,4 +19,19 @@ func RandNum(length int) string {
 		base = int(math.Pow10(length - 1))
 	}
 	return fmt.Sprint(rand.Intn(int(math.Pow10(length))-1-base) + base)
+}
+
+//SubstringByFlag 通过左右标记切割文本，返回第一个匹配
+func SubstringByFlag(src, left, right string) string {
+	slice1 := strings.SplitN(src, left, 2)
+	if len(slice1) < 2 {
+		return ""
+	}
+	slice2 := strings.SplitN(slice1[1], right, 2)
+	if len(slice1) < 2 {
+		return ""
+	}
+
+	return slice2[0]
+
 }
