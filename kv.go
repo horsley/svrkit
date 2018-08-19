@@ -25,6 +25,14 @@ func (kv *KVCache) Set(k, v interface{}) {
 	kv.data[k] = v
 }
 
+//Del 删除
+func (kv *KVCache) Del(k interface{}) {
+	kv.lock.Lock()
+	defer kv.lock.Unlock()
+
+	delete(kv.data, k)
+}
+
 //Get 获取
 func (kv *KVCache) Get(k interface{}) interface{} {
 	kv.lock.RLock()
