@@ -14,7 +14,7 @@ type SignalHandler struct {
 	Cmd  string
 	Desc string
 	//收到信号之后的处理函数，返回一个结果提示文本
-	Action func() string
+	Action func(args ...string) string
 }
 
 //SignalManager 信号处理器
@@ -65,6 +65,7 @@ func (s *SignalManager) IsSignalSender() bool {
 				if s.Listen != "" {
 					resp, err := http.PostForm("http://"+s.Listen, url.Values{
 						"signal": []string{signal},
+						"args":   os.Args[i+2:],
 					})
 					if err != nil {
 						fmt.Println("send signal err:", err)
@@ -92,7 +93,7 @@ func (s *SignalManager) ListenSignal() {
 		signal := r.FormValue("signal")
 		for k, v := range s.items {
 			if k == signal {
-				rw.Write([]byte(v.Action()))
+				rw.Write([]byte(v.Action(r.Form["args"]...)))
 				return
 			}
 		}
