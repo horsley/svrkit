@@ -41,10 +41,10 @@ func (kv *TTLCache) Get(k interface{}) interface{} {
 	if ttlItem, ok := item.(*ttlCacheItem); ok {
 		if ttlItem.expire.Before(time.Now()) {
 			delete(kv.data, k)
-			return nil
 		} else {
 			return ttlItem.data
 		}
+		return nil
 	} else {
 		return item
 	}
