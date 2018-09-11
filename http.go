@@ -174,12 +174,12 @@ func HTTPGet(url string) ([]byte, error) {
 //NoIndexFilesystem 用于 http.FileServer 用于屏蔽默认目录列表（被认为不安全） 代码来自 brad
 //https://groups.google.com/forum/#!topic/golang-nuts/bStLPdIVM6w
 type NoIndexFilesystem struct {
-	fs http.FileSystem
+	FS http.FileSystem
 }
 
 //Open 覆盖FileSystem的 Open 方法 插入不读目录的包装
 func (fs NoIndexFilesystem) Open(name string) (http.File, error) {
-	f, err := fs.fs.Open(name)
+	f, err := fs.FS.Open(name)
 	if err != nil {
 		return nil, err
 	}
