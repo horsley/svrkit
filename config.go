@@ -26,6 +26,18 @@ type Config struct {
 
 //LoadFromReader 从 reader 读取
 func (c *Config) LoadFromReader(f io.Reader) {
+	newKv := c.readKV(f)
+
+	c.lock.Lock()
+	defer c.lock.Unlock()
+	if dev, ok := newKv[ConfigEnvSuffix]; ok && len(dev) > 0 && dev[0] == ConfigBoolTrueValue {
+		c.isDev = true
+	}
+
+	c.kv = newKv
+}
+
+func (c *Config) readKV(f io.Reader) map[string][]string {
 	kvRe := regexp.MustCompile(`(.*?)=(.*?)$`)
 	newKv := make(map[string][]string)
 
@@ -44,17 +56,10 @@ func (c *Config) LoadFromReader(f io.Reader) {
 
 		}
 	}
-
-	c.lock.Lock()
-	defer c.lock.Unlock()
-	if dev, ok := newKv[ConfigEnvSuffix]; ok && len(dev) > 0 && dev[0] == ConfigBoolTrueValue {
-		c.isDev = true
-	}
-
-	c.kv = newKv
+	return newKv
 }
 
-//Load 从文件读入
+//Load 从文件读入 如果有filename.{ConfigEnvSuffix}文件存在，其中的配置会覆盖进来
 func (c *Config) Load(filename string) error {
 
 	f, err := os.Open(filename)
@@ -64,6 +69,24 @@ func (c *Config) Load(filename string) error {
 	defer f.Close()
 
 	c.LoadFromReader(f)
+
+	for {
+		devOverride := filename + "." + ConfigEnvSuffix
+		if _, err := os.Stat(devOverride); err == nil {
+			o, err := os.Open(devOverride)
+			if err != nil {
+				break
+			}
+			defer o.Close()
+
+			overrideKV := c.readKV(o)
+			for k, v := range overrideKV {
+				c.kv[k] = v
+			}
+		}
+		break
+	}
+
 	return nil
 }
 

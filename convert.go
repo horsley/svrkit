@@ -12,11 +12,11 @@ func PrettySize(b int64) string {
 	if b < 1024 {
 		return fmt.Sprint(b, "B")
 	} else if b < 1024*1024 {
-		return fmt.Sprintf("%.2gKB", float64(b)/float64(1024))
+		return fmt.Sprintf("%.2fKB", float64(b)/float64(1024))
 	} else if b < 1024*1024*1024 {
-		return fmt.Sprintf("%.2gMB", float64(b)/float64(1024*1024))
+		return fmt.Sprintf("%.2fMB", float64(b)/float64(1024*1024))
 	}
-	return fmt.Sprintf("%.2gGB", float64(b)/float64(1024*1024*1024))
+	return fmt.Sprintf("%.2fGB", float64(b)/float64(1024*1024*1024))
 }
 
 //PrettyDate 优化日期显示
