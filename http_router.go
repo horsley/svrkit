@@ -19,7 +19,7 @@ type Router struct {
 }
 
 //requestUserInfo 这里暂存 beforeHandler 中可能写入的 userInfo, 否则HTTPFuncHandler转成http 包标准 handler 之后，丢失userInfo 信息
-var requestUserInfo = make(map[string]interface{})
+var requestUserInfo = NewKVCache()
 
 //NewRouter 创建 router 的方法
 func NewRouter() *Router {
@@ -46,7 +46,9 @@ func (rt *Router) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 			return
 		}
 		if req.UserInfo != nil {
-			requestUserInfo[fmt.Sprintf("%p", r)] = req.UserInfo
+			k := fmt.Sprintf("%p", r)
+			requestUserInfo.Set(k, req.UserInfo)
+			defer requestUserInfo.Del(k)
 		}
 	}
 

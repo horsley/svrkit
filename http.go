@@ -134,7 +134,7 @@ func (h HTTPHandlerFunc) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	rspW := ResponseWriter{rw}
 	req := Request{Request: r}
 
-	if info, ok := requestUserInfo[fmt.Sprintf("%p", r)]; ok {
+	if info := requestUserInfo.Get(fmt.Sprintf("%p", r)); info != nil {
 		req.UserInfo = info.(map[string]interface{})
 	}
 	h(&rspW, &req)
