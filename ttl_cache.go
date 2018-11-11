@@ -41,13 +41,12 @@ func (kv *TTLCache) Get(k interface{}) interface{} {
 	if ttlItem, ok := item.(*ttlCacheItem); ok {
 		if ttlItem.expire.Before(time.Now()) {
 			delete(kv.data, k)
-		} else {
-			return ttlItem.data
+			return nil
 		}
-		return nil
-	} else {
-		return item
+		return ttlItem.data
+
 	}
+	return item
 }
 
 //GetString 获取字符串类型
