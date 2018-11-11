@@ -1,6 +1,7 @@
 package svrkit
 
 import (
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 )
@@ -17,6 +18,9 @@ type Router struct {
 	AfterHandler func(*ResponseWriter, *Request, *httptest.ResponseRecorder) (skip bool)
 }
 
+//requestUserInfo 这里暂存 beforeHandler 中可能写入的 userInfo, 否则HTTPFuncHandler转成http 包标准 handler 之后，丢失userInfo 信息
+var requestUserInfo = make(map[string]interface{})
+
 //NewRouter 创建 router 的方法
 func NewRouter() *Router {
 	return &Router{
@@ -25,7 +29,7 @@ func NewRouter() *Router {
 }
 
 //HandleFuncEx 本包 handler 的注册方法
-func (rt *Router) HandleFuncEx(pattern string, handler func(*ResponseWriter, *Request)) {
+func (rt *Router) HandleFuncEx(pattern string, handler HTTPHandlerFunc) {
 	rt.HandleFunc(pattern, HTTPFunc(handler))
 }
 
@@ -36,9 +40,13 @@ func (rt *Router) SetSubRouter(pattern string, sub *Router) {
 
 func (rt *Router) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	if rt.BeforeHandler != nil {
-		skip := rt.BeforeHandler(&ResponseWriter{rw}, &Request{Request: r})
+		req := &Request{Request: r}
+		skip := rt.BeforeHandler(&ResponseWriter{rw}, req)
 		if skip {
 			return
+		}
+		if req.UserInfo != nil {
+			requestUserInfo[fmt.Sprintf("%p", r)] = req.UserInfo
 		}
 	}
 

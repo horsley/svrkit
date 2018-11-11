@@ -13,16 +13,6 @@ import (
 	"github.com/alecthomas/template"
 )
 
-var (
-	//CookieTokenPrivateKey CookieToken hash用的盐值
-	CookieTokenPrivateKey = "3f47d8c41e5576r09h1310H)(*"
-)
-
-//HTTPSvr http 服务器
-type HTTPSvr struct {
-	http.Server
-}
-
 //ResponseWriter ResponseWriter 封装一些便捷操作
 type ResponseWriter struct {
 	http.ResponseWriter
@@ -58,19 +48,15 @@ func (rw *ResponseWriter) RenderHTML(file string, data interface{}) []byte {
 	return buf.Bytes()
 }
 
-//SetCookieToken 种植 CookieToken
-func (rw *ResponseWriter) SetCookieToken(key, val string) {
-	http.SetCookie(rw, &http.Cookie{
-		Name:  key,
-		Value: fmt.Sprintf("%s|%s", val, SHA1Hash(CookieTokenPrivateKey+SHA1Hash(val))),
-		Path:  "/",
-	})
+//Redirect 重定向
+func (rw *ResponseWriter) Redirect(r *Request, url string, code int) {
+	http.Redirect(rw, r.HTTPRequest(), url, code)
 }
 
 //Request HTTP请求，封装一些便捷操作
 type Request struct {
 	//用户自定义使用的业务信息，用于请求处理链上传递信息
-	UserInfo interface{}
+	UserInfo map[string]interface{}
 
 	*http.Request
 	reqBody []byte
@@ -131,33 +117,27 @@ func (r *Request) ReadRequestBody() []byte {
 	return r.reqBody
 }
 
-//GetCookieToken 获取存放在 cookie 的 kv 值，如果没有或者检验不合法返回空串
-func (r *Request) GetCookieToken(key string) string {
-	if c, err := r.Cookie(key); err == nil {
-		parts := strings.Split(c.Value, "|")
-		if len(parts) != 2 {
-			return ""
-		}
-
-		val := parts[0]
-		hash := parts[1]
-
-		if SHA1Hash(CookieTokenPrivateKey+SHA1Hash(val)) != hash {
-			return ""
-		}
-
-		return val
-	}
-	return ""
+//HTTPRequest 返回原始 request
+func (r *Request) HTTPRequest() *http.Request {
+	return r.Request
 }
 
-//HTTPFunc http 包装
-func HTTPFunc(handler func(*ResponseWriter, *Request)) func(http.ResponseWriter, *http.Request) {
-	return func(rw http.ResponseWriter, r *http.Request) {
-		rspW := ResponseWriter{rw}
-		req := Request{Request: r}
-		handler(&rspW, &req)
+//HTTPHandlerFunc svrkit 的 handler 定义
+type HTTPHandlerFunc func(*ResponseWriter, *Request)
+
+//HTTPFunc 包装svrkit 的HTTPHandlerFunc成标准 http.HandlerFunc
+func HTTPFunc(handler HTTPHandlerFunc) http.HandlerFunc {
+	return handler.ServeHTTP
+}
+
+func (h HTTPHandlerFunc) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
+	rspW := ResponseWriter{rw}
+	req := Request{Request: r}
+
+	if info, ok := requestUserInfo[fmt.Sprintf("%p", r)]; ok {
+		req.UserInfo = info.(map[string]interface{})
 	}
+	h(&rspW, &req)
 }
 
 //HTTPGet 单纯的网络读取
