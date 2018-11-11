@@ -48,6 +48,11 @@ func (rw *ResponseWriter) RenderHTML(file string, data interface{}) []byte {
 	return buf.Bytes()
 }
 
+//WriteHTML 渲染网页 并输出渲染结果
+func (rw *ResponseWriter) WriteHTML(file string, data interface{}) {
+	rw.Write(rw.RenderHTML(file, data))
+}
+
 //Redirect 重定向
 func (rw *ResponseWriter) Redirect(r *Request, url string, code int) {
 	http.Redirect(rw, r.HTTPRequest(), url, code)
