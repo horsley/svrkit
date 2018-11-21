@@ -10,7 +10,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/alecthomas/template"
+	"text/template"
 )
 
 //ResponseWriter ResponseWriter 封装一些便捷操作
