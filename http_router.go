@@ -39,8 +39,8 @@ func (rt *Router) SetSubRouter(pattern string, sub *Router) {
 }
 
 func (rt *Router) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
+	req := &Request{Request: r}
 	if rt.BeforeHandler != nil {
-		req := &Request{Request: r}
 		skip := rt.BeforeHandler(&ResponseWriter{rw}, req)
 		if skip {
 			return
@@ -55,7 +55,7 @@ func (rt *Router) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	if rt.AfterHandler != nil {
 		rec := httptest.NewRecorder()
 		rt.ServeMux.ServeHTTP(rec, r)
-		skip := rt.AfterHandler(&ResponseWriter{rw}, &Request{Request: r}, rec)
+		skip := rt.AfterHandler(&ResponseWriter{rw}, req, rec)
 		if skip {
 			return
 		}
