@@ -10,7 +10,7 @@ import (
 	"os"
 	"strings"
 
-	"text/template"
+	"html/template"
 )
 
 //ResponseWriter ResponseWriter 封装一些便捷操作
