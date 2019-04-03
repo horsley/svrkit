@@ -118,7 +118,10 @@ func (c *Config) GetWithDefault(key string, def []string) []string {
 
 //GetFirst 取首个出现的值
 func (c *Config) GetFirst(key string) string {
-	return c.GetArray(key)[0]
+	if array := c.GetArray(key); len(array) > 0 {
+		return array[0]
+	}
+	return ""
 }
 
 //Get 取首个出现的值 GetFirst 的别名
