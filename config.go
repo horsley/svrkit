@@ -98,11 +98,11 @@ func (c *Config) LoadFromString(conf string) {
 
 //GetArray 获取文本数组
 func (c *Config) GetArray(key string) []string {
-	return c.GetWithDefault(key, "")
+	return c.GetWithDefault(key, []string{})
 }
 
 //GetWithDefault 读取文本数组 带默认项
-func (c *Config) GetWithDefault(key string, def string) []string {
+func (c *Config) GetWithDefault(key string, def []string) []string {
 	c.lock.RLock()
 	defer c.lock.RUnlock()
 
@@ -113,7 +113,7 @@ func (c *Config) GetWithDefault(key string, def string) []string {
 	if v, ok := c.kv[key]; ok {
 		return v
 	}
-	return []string{def}
+	return def
 }
 
 //GetFirst 取首个出现的值
@@ -128,7 +128,7 @@ func (c *Config) Get(key string) string {
 
 //GetFirstWithDefault 取首个出现的值 带默认配置
 func (c *Config) GetFirstWithDefault(key, def string) string {
-	return c.GetWithDefault(key, def)[0]
+	return c.GetWithDefault(key, []string{def})[0]
 }
 
 //GetInt 取整数值配置
@@ -147,7 +147,7 @@ func (c *Config) GetFloat(key string) float64 {
 
 //GetIntWithDefault 取整数值配置带默认值
 func (c *Config) GetIntWithDefault(key string, def int) int {
-	s := c.GetWithDefault(key, fmt.Sprint(def))
+	s := c.GetWithDefault(key, []string{fmt.Sprint(def)})
 	return c.mustInt(s[0])
 }
 
@@ -168,5 +168,5 @@ func (c *Config) GetBoolWithDefault(key string, def bool) bool {
 		defStr = ConfigBoolTrueValue
 	}
 
-	return strings.ToLower(c.GetWithDefault(key, defStr)[0]) == ConfigBoolTrueValue
+	return strings.ToLower(c.GetWithDefault(key, []string{defStr})[0]) == ConfigBoolTrueValue
 }
