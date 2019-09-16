@@ -3,6 +3,7 @@ package svrkit
 import (
 	"errors"
 	"net/http"
+	"time"
 )
 
 //CookieStore 在 cookie 中存放会话信息并附带签名，可防伪造
@@ -25,6 +26,16 @@ func (c *CookieStore) Set(rw http.ResponseWriter, k, v string) {
 		Name:  k,
 		Value: c.signValue(v),
 		Path:  c.Path,
+	})
+}
+
+//SetWithTTL  写入会话信息，注意 cookie 使用须在内容 body 输出之前 带expire
+func (c *CookieStore) SetWithTTL(rw http.ResponseWriter, k, v string, ttl time.Duration) {
+	http.SetCookie(rw, &http.Cookie{
+		Name:    k,
+		Value:   c.signValue(v),
+		Path:    c.Path,
+		Expires: time.Now().Add(ttl),
 	})
 }
 

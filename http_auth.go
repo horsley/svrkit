@@ -59,7 +59,11 @@ func (c *CookieAuth) GuardHandler(h http.Handler) http.Handler {
 
 // SetAuthInfo 写入登录态信息
 func (c *CookieAuth) SetAuthInfo(rw http.ResponseWriter, info string) {
-	c.Store.Set(rw, c.CookieName, c.prependTimeInfo(info))
+	if c.TTL.Nanoseconds() == 0 {
+		c.Store.SetWithTTL(rw, c.CookieName, c.prependTimeInfo(info), 365*10*24*60*60*time.Second) //10 years for forever
+	} else {
+		c.Store.SetWithTTL(rw, c.CookieName, c.prependTimeInfo(info), c.TTL*2)
+	}
 }
 
 func (c *CookieAuth) prependTimeInfo(info string) string {
