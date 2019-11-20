@@ -173,3 +173,15 @@ func (c *Config) GetBoolWithDefault(key string, def bool) bool {
 
 	return strings.ToLower(c.GetWithDefault(key, []string{defStr})[0]) == ConfigBoolTrueValue
 }
+
+//AllKeys 返回所有配置key
+func (c *Config) AllKeys() []string {
+	c.lock.RLock()
+	defer c.lock.RUnlock()
+
+	keys := make([]string, 0, len(c.kv))
+	for k := range c.kv {
+		keys = append(keys, k)
+	}
+	return keys
+}
