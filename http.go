@@ -53,6 +53,28 @@ func (rw *ResponseWriter) WriteHTML(file string, data interface{}) {
 	rw.Write(rw.RenderHTML(file, data))
 }
 
+//RenderHTMLString 渲染网页 返回渲染结果
+func (rw *ResponseWriter) RenderHTMLString(html string, data interface{}) []byte {
+	t, err := template.New(SHA1Hash(html)).Parse(html)
+	if err != nil {
+		return []byte("tmpl parse error:" + err.Error())
+	}
+
+	var buf bytes.Buffer
+	err = t.Execute(&buf, data)
+
+	if err != nil {
+		return []byte("tmpl exec error:" + err.Error())
+	}
+
+	return buf.Bytes()
+}
+
+//WriteHTMLString 渲染网页 并输出渲染结果
+func (rw *ResponseWriter) WriteHTMLString(html string, data interface{}) {
+	rw.Write(rw.RenderHTMLString(html, data))
+}
+
 //Redirect 重定向
 func (rw *ResponseWriter) Redirect(r *Request, url string, code int) {
 	http.Redirect(rw, r.HTTPRequest(), url, code)
