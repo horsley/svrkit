@@ -75,6 +75,20 @@ func (rw *ResponseWriter) WriteHTMLString(html string, data interface{}) {
 	rw.Write(rw.RenderHTMLString(html, data))
 }
 
+//HTTPError 输出http错误
+func (rw *ResponseWriter) HTTPError(code int, message string) {
+	http.Error(rw, message, code)
+}
+
+//WriteCommonResponse 通用json格式响应 {Code: x, Message: 'xx', Data: xxxx}
+func (rw *ResponseWriter) WriteCommonResponse(code int, message string, data interface{}) {
+	rw.WriteJSON(map[string]interface{}{
+		"Code":    code,
+		"Message": message,
+		"Data":    data,
+	})
+}
+
 //Redirect 重定向
 func (rw *ResponseWriter) Redirect(r *Request, url string, code int) {
 	http.Redirect(rw, r.HTTPRequest(), url, code)
