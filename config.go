@@ -17,6 +17,8 @@ var ConfigEnvSuffix = "dev"
 //ConfigBoolTrueValue 布尔值开关的真值字符串
 var ConfigBoolTrueValue = "yes"
 
+const runtimeOverrideSuffix = "runtime"
+
 //Config 配置信息 带读写锁哦
 type Config struct {
 	kv    map[string][]string
@@ -101,6 +103,14 @@ func (c *Config) GetArray(key string) []string {
 	return c.GetWithDefault(key, []string{})
 }
 
+//OverrideConfig 运行时覆盖配置值，仅限内存，最高优先级（高于dev覆盖）
+func (c *Config) OverrideConfig(key string, val []string) {
+	c.lock.Lock()
+	defer c.lock.Unlock()
+
+	c.kv[key+"."+runtimeOverrideSuffix] = val
+}
+
 //GetWithDefault 读取文本数组 带默认项
 func (c *Config) GetWithDefault(key string, def []string) []string {
 	c.lock.RLock()
@@ -172,4 +182,16 @@ func (c *Config) GetBoolWithDefault(key string, def bool) bool {
 	}
 
 	return strings.ToLower(c.GetWithDefault(key, []string{defStr})[0]) == ConfigBoolTrueValue
+}
+
+//AllKeys 返回所有配置key
+func (c *Config) AllKeys() []string {
+	c.lock.RLock()
+	defer c.lock.RUnlock()
+
+	keys := make([]string, 0, len(c.kv))
+	for k := range c.kv {
+		keys = append(keys, k)
+	}
+	return keys
 }
