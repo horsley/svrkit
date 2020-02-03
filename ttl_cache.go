@@ -32,6 +32,29 @@ func (kv *TTLCache) SetWithExpire(k, v interface{}, expire time.Time) {
 	}
 }
 
+//AddIntWithExpire 设置 Int 值
+func (kv *TTLCache) AddIntWithExpire(k interface{}, incr int, expire time.Time) {
+	kv.lock.Lock()
+	defer kv.lock.Unlock()
+
+	var oldVal int
+	item := kv.data[k]
+	if ttlItem, ok := item.(*ttlCacheItem); ok {
+		if !ttlItem.expire.Before(time.Now()) {
+			if v, ok := ttlItem.data.(int); ok {
+				oldVal = v
+			}
+		}
+	} else if v, ok := item.(int); ok {
+		oldVal = v
+	}
+
+	kv.data[k] = &ttlCacheItem{
+		data:   oldVal + incr,
+		expire: expire,
+	}
+}
+
 //Get 获取
 func (kv *TTLCache) Get(k interface{}) interface{} {
 	kv.lock.RLock()
