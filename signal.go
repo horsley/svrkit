@@ -76,7 +76,7 @@ func (s *SignalManager) IsSignalSender() bool {
 					}
 				}
 			} else { //flag 之后无其他参数，输出帮助
-				s.printHelp()
+				fmt.Println(s.helpText())
 			}
 			return true
 		}
@@ -98,15 +98,16 @@ func (s *SignalManager) ListenSignal() {
 			}
 		}
 		//not found
-		rw.Write([]byte("signal not defined"))
+		rw.Write([]byte(fmt.Sprintf("signal '%s' not defined\n\n%s", signal, s.helpText())))
 	})}
 	log.Fatalln("signal listen err:", server.ListenAndServe())
 }
 
-func (s *SignalManager) printHelp() {
-	fmt.Println(os.Args[0], s.ArgFlag, "[signal]")
-	fmt.Println("Available signals:")
+func (s *SignalManager) helpText() string {
+	result := fmt.Sprintln(os.Args[0], s.ArgFlag, "[signal]")
+	result += fmt.Sprintln("Available signals:")
 	for k, v := range s.items {
-		fmt.Println("    ", k, ":", v.Desc)
+		result += fmt.Sprintln("    ", k, ":", v.Desc)
 	}
+	return result
 }
