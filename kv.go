@@ -33,6 +33,14 @@ func (kv *KVCache) Del(k interface{}) {
 	delete(kv.data, k)
 }
 
+//Count 获取数量
+func (kv *KVCache) Count() int {
+	kv.lock.RLock()
+	defer kv.lock.RUnlock()
+
+	return len(kv.data)
+}
+
 //Get 获取
 func (kv *KVCache) Get(k interface{}) interface{} {
 	kv.lock.RLock()
