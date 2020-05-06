@@ -57,6 +57,23 @@ func (c *CookieAuth) GuardHandler(h http.Handler) http.Handler {
 	})
 }
 
+//GuardRouter 为 svrkit.Router 整体提供保护
+func (c *CookieAuth) GuardRouter(r *Router) *Router {
+	wrap := NewRouter()
+
+	wrap.HandleFunc("/", func(rw http.ResponseWriter, req *http.Request) {
+		info, err := c.GetAuthInfo(req)
+		if c.VerifyFunc != nil && !c.VerifyFunc(info, err == ErrAuthInfoExpired) {
+			http.Redirect(rw, req, c.LoginPage, http.StatusFound)
+			return
+		}
+
+		r.ServeHTTP(rw, req)
+	})
+
+	return wrap
+}
+
 // SetAuthInfo 写入登录态信息
 func (c *CookieAuth) SetAuthInfo(rw http.ResponseWriter, info string) {
 	if c.TTL.Nanoseconds() == 0 {
