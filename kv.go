@@ -76,3 +76,16 @@ func (kv *KVCache) Clear() {
 	defer kv.lock.Unlock()
 	kv.data = make(map[interface{}]interface{})
 }
+
+//Keys 获取所有缓存key
+func (kv *KVCache) Keys() []interface{} {
+	kv.lock.RLock()
+	defer kv.lock.RUnlock()
+
+	result := make([]interface{}, 0, len(kv.data))
+
+	for k := range kv.data {
+		result = append(result, k)
+	}
+	return result
+}
