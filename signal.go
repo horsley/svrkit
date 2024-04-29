@@ -2,14 +2,14 @@ package svrkit
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 	"net/url"
 	"os"
 )
 
-//SignalHandler 描述一个信号处理项
+// SignalHandler 描述一个信号处理项
 type SignalHandler struct {
 	Cmd  string
 	Desc string
@@ -17,7 +17,7 @@ type SignalHandler struct {
 	Action func(args ...string) string
 }
 
-//SignalManager 信号处理器
+// SignalManager 信号处理器
 type SignalManager struct {
 	//Listen 监听地址
 	Listen string
@@ -26,7 +26,7 @@ type SignalManager struct {
 	items   map[string]SignalHandler
 }
 
-//AddHandler 注册处理项
+// AddHandler 注册处理项
 func (s *SignalManager) AddHandler(handlers ...SignalHandler) {
 	if s.items == nil {
 		s.items = make(map[string]SignalHandler)
@@ -36,27 +36,31 @@ func (s *SignalManager) AddHandler(handlers ...SignalHandler) {
 	}
 }
 
-//IsSignalSender 会检测 os.Args, 如果发现ArgFlag 则会把下一参数作为 signal 发送到 Listen 地址
-//如果没有下一参数，会打印已注册的 signal 说明信息，返回 true，如果没有找到ArgFlag，返回 false
+// IsSignalSender 会检测 os.Args, 如果发现ArgFlag 则会把下一参数作为 signal 发送到 Listen 地址
+// 如果没有下一参数，会打印已注册的 signal 说明信息，返回 true，如果没有找到ArgFlag，返回 false
 // 示例代码
-// signal := svrkit.SignalManager{
-// 	Listen:  "127.0.0.1:18909",
-// 	ArgFlag: "-s",
-// }
-// signal.AddHandler(svrkit.SignalHandler{
-// 	Cmd:  "reload",
-// 	Desc: "reload cache",
-// 	Action: func() string {
-// 		log.Println("received signal reload")
-// 		//logic here
-// 		return "reload ok"
-// 	},
-// })
-// if signal.IsSignalSender() {
-// 	os.Exit(0)
-// } else {
-// 	go signal.ListenSignal()
-// }
+//
+//	signal := svrkit.SignalManager{
+//		Listen:  "127.0.0.1:18909",
+//		ArgFlag: "-s",
+//	}
+//
+//	signal.AddHandler(svrkit.SignalHandler{
+//		Cmd:  "reload",
+//		Desc: "reload cache",
+//		Action: func() string {
+//			log.Println("received signal reload")
+//			//logic here
+//			return "reload ok"
+//		},
+//	})
+//
+//	if signal.IsSignalSender() {
+//		os.Exit(0)
+//	} else {
+//
+//		go signal.ListenSignal()
+//	}
 func (s *SignalManager) IsSignalSender() bool {
 	for i, v := range os.Args {
 		if v == s.ArgFlag {
@@ -71,7 +75,7 @@ func (s *SignalManager) IsSignalSender() bool {
 						fmt.Println("send signal err:", err)
 					} else {
 						defer resp.Body.Close()
-						respText, _ := ioutil.ReadAll(resp.Body)
+						respText, _ := io.ReadAll(resp.Body)
 						fmt.Println(string(respText))
 					}
 				}
@@ -84,7 +88,7 @@ func (s *SignalManager) IsSignalSender() bool {
 	return false
 }
 
-//ListenSignal 开始在 Listen 地址上监听 signal，请用一个独立携程做这个事情
+// ListenSignal 开始在 Listen 地址上监听 signal，请用一个独立携程做这个事情
 func (s *SignalManager) ListenSignal() {
 	server := &http.Server{Addr: s.Listen, Handler: http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		if r.Method != "POST" {

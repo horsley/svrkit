@@ -11,22 +11,22 @@ import (
 	"sync"
 )
 
-//ConfigEnvSuffix 开发配置覆盖后缀
+// ConfigEnvSuffix 开发配置覆盖后缀
 var ConfigEnvSuffix = "dev"
 
-//ConfigBoolTrueValue 布尔值开关的真值字符串
+// ConfigBoolTrueValue 布尔值开关的真值字符串
 var ConfigBoolTrueValue = "yes"
 
 const runtimeOverrideSuffix = "runtime"
 
-//Config 配置信息 带读写锁哦
+// Config 配置信息 带读写锁哦
 type Config struct {
 	kv    map[string][]string
 	lock  sync.RWMutex
 	isDev bool
 }
 
-//LoadFromReader 从 reader 读取
+// LoadFromReader 从 reader 读取
 func (c *Config) LoadFromReader(f io.Reader) {
 	newKv := c.readKV(f)
 
@@ -61,7 +61,7 @@ func (c *Config) readKV(f io.Reader) map[string][]string {
 	return newKv
 }
 
-//Load 从文件读入 如果有filename.{ConfigEnvSuffix}文件存在，其中的配置会覆盖进来
+// Load 从文件读入 如果有filename.{ConfigEnvSuffix}文件存在，其中的配置会覆盖进来
 func (c *Config) Load(filename string) error {
 
 	f, err := os.Open(filename)
@@ -72,38 +72,33 @@ func (c *Config) Load(filename string) error {
 
 	c.LoadFromReader(f)
 
-	for {
-		devOverride := filename + "." + ConfigEnvSuffix
-		if _, err := os.Stat(devOverride); err == nil {
-			o, err := os.Open(devOverride)
-			if err != nil {
-				break
-			}
+	devOverride := filename + "." + ConfigEnvSuffix
+	if _, err := os.Stat(devOverride); err == nil {
+		o, err := os.Open(devOverride)
+		if err == nil {
 			defer o.Close()
-
 			overrideKV := c.readKV(o)
 			for k, v := range overrideKV {
 				c.kv[k] = v
 			}
 		}
-		break
 	}
 
 	return nil
 }
 
-//LoadFromString 从字符串解析
+// LoadFromString 从字符串解析
 func (c *Config) LoadFromString(conf string) {
 	f := strings.NewReader(conf)
 	c.LoadFromReader(f)
 }
 
-//GetArray 获取文本数组
+// GetArray 获取文本数组
 func (c *Config) GetArray(key string) []string {
 	return c.GetWithDefault(key, []string{})
 }
 
-//OverrideConfig 运行时覆盖配置值，仅限内存，最高优先级（高于dev覆盖）
+// OverrideConfig 运行时覆盖配置值，仅限内存，最高优先级（高于dev覆盖）
 func (c *Config) OverrideConfig(key string, val []string) {
 	c.lock.Lock()
 	defer c.lock.Unlock()
@@ -111,7 +106,7 @@ func (c *Config) OverrideConfig(key string, val []string) {
 	c.kv[key+"."+runtimeOverrideSuffix] = val
 }
 
-//GetWithDefault 读取文本数组 带默认项
+// GetWithDefault 读取文本数组 带默认项
 func (c *Config) GetWithDefault(key string, def []string) []string {
 	c.lock.RLock()
 	defer c.lock.RUnlock()
@@ -126,7 +121,7 @@ func (c *Config) GetWithDefault(key string, def []string) []string {
 	return def
 }
 
-//GetFirst 取首个出现的值
+// GetFirst 取首个出现的值
 func (c *Config) GetFirst(key string) string {
 	if array := c.GetArray(key); len(array) > 0 {
 		return array[0]
@@ -134,22 +129,22 @@ func (c *Config) GetFirst(key string) string {
 	return ""
 }
 
-//Get 取首个出现的值 GetFirst 的别名
+// Get 取首个出现的值 GetFirst 的别名
 func (c *Config) Get(key string) string {
 	return c.GetFirst(key)
 }
 
-//GetFirstWithDefault 取首个出现的值 带默认配置
+// GetFirstWithDefault 取首个出现的值 带默认配置
 func (c *Config) GetFirstWithDefault(key, def string) string {
 	return c.GetWithDefault(key, []string{def})[0]
 }
 
-//GetInt 取整数值配置
+// GetInt 取整数值配置
 func (c *Config) GetInt(key string) int {
 	return c.mustInt(c.GetFirst(key))
 }
 
-//GetFloat 取浮点值配置
+// GetFloat 取浮点值配置
 func (c *Config) GetFloat(key string) float64 {
 	f, err := strconv.ParseFloat(c.Get(key), 64)
 	if err != nil {
@@ -158,7 +153,7 @@ func (c *Config) GetFloat(key string) float64 {
 	return f
 }
 
-//GetIntWithDefault 取整数值配置带默认值
+// GetIntWithDefault 取整数值配置带默认值
 func (c *Config) GetIntWithDefault(key string, def int) int {
 	s := c.GetWithDefault(key, []string{fmt.Sprint(def)})
 	return c.mustInt(s[0])
@@ -169,12 +164,12 @@ func (c *Config) mustInt(src string) int {
 	return r
 }
 
-//GetBool 取布尔值配置
+// GetBool 取布尔值配置
 func (c *Config) GetBool(key string) bool {
 	return c.GetBoolWithDefault(key, false)
 }
 
-//GetBoolWithDefault 带默认值取布尔值配置
+// GetBoolWithDefault 带默认值取布尔值配置
 func (c *Config) GetBoolWithDefault(key string, def bool) bool {
 	var defStr string
 	if def {
@@ -184,7 +179,7 @@ func (c *Config) GetBoolWithDefault(key string, def bool) bool {
 	return strings.ToLower(c.GetWithDefault(key, []string{defStr})[0]) == ConfigBoolTrueValue
 }
 
-//AllKeys 返回所有配置key
+// AllKeys 返回所有配置key
 func (c *Config) AllKeys() []string {
 	c.lock.RLock()
 	defer c.lock.RUnlock()

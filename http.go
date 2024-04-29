@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net"
 	"net/http"
 	"os"
@@ -13,25 +13,25 @@ import (
 	"html/template"
 )
 
-//ResponseWriter ResponseWriter 封装一些便捷操作
+// ResponseWriter ResponseWriter 封装一些便捷操作
 type ResponseWriter struct {
 	http.ResponseWriter
 }
 
-//WriteString 输出字符串
+// WriteString 输出字符串
 func (rw *ResponseWriter) WriteString(msg string) {
 	rw.Header().Set("Content-Type", "text/plain; charset=utf-8")
 	rw.Write([]byte(msg))
 }
 
-//WriteJSON 输出 json
+// WriteJSON 输出 json
 func (rw *ResponseWriter) WriteJSON(data interface{}) {
 	b, _ := json.Marshal(data)
 	rw.Header().Set("Content-Type", "application/json")
 	rw.Write(b)
 }
 
-//RenderHTML 渲染网页 返回渲染结果
+// RenderHTML 渲染网页 返回渲染结果
 func (rw *ResponseWriter) RenderHTML(file string, data interface{}) []byte {
 	t, err := template.ParseFiles(file)
 	if err != nil {
@@ -48,12 +48,12 @@ func (rw *ResponseWriter) RenderHTML(file string, data interface{}) []byte {
 	return buf.Bytes()
 }
 
-//WriteHTML 渲染网页 并输出渲染结果
+// WriteHTML 渲染网页 并输出渲染结果
 func (rw *ResponseWriter) WriteHTML(file string, data interface{}) {
 	rw.Write(rw.RenderHTML(file, data))
 }
 
-//RenderHTMLString 渲染网页 返回渲染结果
+// RenderHTMLString 渲染网页 返回渲染结果
 func (rw *ResponseWriter) RenderHTMLString(html string, data interface{}) []byte {
 	t, err := template.New(SHA1Hash(html)).Parse(html)
 	if err != nil {
@@ -70,17 +70,17 @@ func (rw *ResponseWriter) RenderHTMLString(html string, data interface{}) []byte
 	return buf.Bytes()
 }
 
-//WriteHTMLString 渲染网页 并输出渲染结果
+// WriteHTMLString 渲染网页 并输出渲染结果
 func (rw *ResponseWriter) WriteHTMLString(html string, data interface{}) {
 	rw.Write(rw.RenderHTMLString(html, data))
 }
 
-//HTTPError 输出http错误
+// HTTPError 输出http错误
 func (rw *ResponseWriter) HTTPError(code int, message string) {
 	http.Error(rw, message, code)
 }
 
-//WriteCommonResponse 通用json格式响应 {Code: x, Message: 'xx', Data: xxxx}
+// WriteCommonResponse 通用json格式响应 {Code: x, Message: 'xx', Data: xxxx}
 func (rw *ResponseWriter) WriteCommonResponse(code int, message string, data interface{}) {
 	rw.WriteJSON(map[string]interface{}{
 		"Code":    code,
@@ -89,12 +89,12 @@ func (rw *ResponseWriter) WriteCommonResponse(code int, message string, data int
 	})
 }
 
-//Redirect 重定向
+// Redirect 重定向
 func (rw *ResponseWriter) Redirect(r *Request, url string, code int) {
 	http.Redirect(rw, r.HTTPRequest(), url, code)
 }
 
-//Request HTTP请求，封装一些便捷操作
+// Request HTTP请求，封装一些便捷操作
 type Request struct {
 	//用户自定义使用的业务信息，用于请求处理链上传递信息
 	UserInfo map[string]interface{}
@@ -103,12 +103,12 @@ type Request struct {
 	reqBody []byte
 }
 
-//IsPost 是否 post 请求
+// IsPost 是否 post 请求
 func (r *Request) IsPost() bool {
 	return r.Method == "POST"
 }
 
-//ClientIP 获取 ip 地址
+// ClientIP 获取 ip 地址
 func (r *Request) ClientIP() string {
 	var resultIP string
 	realIP := r.Header.Get("X-Real-Ip")
@@ -133,9 +133,9 @@ func (r *Request) ClientIP() string {
 	return ""
 }
 
-//ReadJSON 解析请求里面的json
+// ReadJSON 解析请求里面的json
 func (r *Request) ReadJSON(data interface{}) error {
-	bin, err := ioutil.ReadAll(r.Body)
+	bin, err := io.ReadAll(r.Body)
 	if err != nil {
 		return err
 	}
@@ -147,10 +147,10 @@ func (r *Request) ReadJSON(data interface{}) error {
 	return json.Unmarshal(bin, data)
 }
 
-//ReadRequestBody 读取请求body，这个方法不受 body 只能读一次的限制，我们会把内容存起来
+// ReadRequestBody 读取请求body，这个方法不受 body 只能读一次的限制，我们会把内容存起来
 func (r *Request) ReadRequestBody() []byte {
 	if r.reqBody == nil {
-		bin, err := ioutil.ReadAll(r.Body)
+		bin, err := io.ReadAll(r.Body)
 		if err == nil {
 			r.reqBody = bin
 		}
@@ -158,15 +158,15 @@ func (r *Request) ReadRequestBody() []byte {
 	return r.reqBody
 }
 
-//HTTPRequest 返回原始 request
+// HTTPRequest 返回原始 request
 func (r *Request) HTTPRequest() *http.Request {
 	return r.Request
 }
 
-//HTTPHandlerFunc svrkit 的 handler 定义
+// HTTPHandlerFunc svrkit 的 handler 定义
 type HTTPHandlerFunc func(*ResponseWriter, *Request)
 
-//HTTPFunc 包装svrkit 的HTTPHandlerFunc成标准 http.HandlerFunc
+// HTTPFunc 包装svrkit 的HTTPHandlerFunc成标准 http.HandlerFunc
 func HTTPFunc(handler HTTPHandlerFunc) http.HandlerFunc {
 	return handler.ServeHTTP
 }
@@ -181,7 +181,7 @@ func (h HTTPHandlerFunc) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	h(&rspW, &req)
 }
 
-//HTTPGet 单纯的网络读取
+// HTTPGet 单纯的网络读取
 func HTTPGet(url string) ([]byte, error) {
 	resp, err := http.Get(url)
 	if err != nil {
@@ -189,16 +189,16 @@ func HTTPGet(url string) ([]byte, error) {
 	}
 	defer resp.Body.Close()
 
-	return ioutil.ReadAll(resp.Body)
+	return io.ReadAll(resp.Body)
 }
 
-//NoIndexFilesystem 用于 http.FileServer 用于屏蔽默认目录列表（被认为不安全） 代码来自 brad
-//https://groups.google.com/forum/#!topic/golang-nuts/bStLPdIVM6w
+// NoIndexFilesystem 用于 http.FileServer 用于屏蔽默认目录列表（被认为不安全） 代码来自 brad
+// https://groups.google.com/forum/#!topic/golang-nuts/bStLPdIVM6w
 type NoIndexFilesystem struct {
 	FS http.FileSystem
 }
 
-//Open 覆盖FileSystem的 Open 方法 插入不读目录的包装
+// Open 覆盖FileSystem的 Open 方法 插入不读目录的包装
 func (fs NoIndexFilesystem) Open(name string) (http.File, error) {
 	f, err := fs.FS.Open(name)
 	if err != nil {
